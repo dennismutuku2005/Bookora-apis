@@ -46,6 +46,28 @@ if ($method === 'GET' && $action === 'list') {
         exit();
     }
 
+} elseif ($method === 'POST' && $action === 'remove') {
+    $data = json_decode(file_get_contents('php://input'), true);
+    if (!$data || !isset($data['user_id']) || !isset($data['book_id'])) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'user_id and book_id are required']);
+        exit();
+    }
+
+    $user_id = trim($data['user_id']);
+    $book_id = trim($data['book_id']);
+
+    $ok = query_execute("DELETE FROM favorites WHERE userId = ? AND bookId = ?", [$user_id, $book_id], 'ss');
+    if ($ok) {
+        http_response_code(200);
+        echo json_encode(['status' => 'success', 'message' => 'Favorite removed']);
+        exit();
+    } else {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Failed to remove favorite']);
+        exit();
+    }
+
 } else {
     http_response_code(405);
     echo json_encode(['status' => 'error', 'message' => 'Method not allowed or invalid action']);
