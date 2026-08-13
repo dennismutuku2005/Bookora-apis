@@ -98,15 +98,13 @@ Stores all book listings posted by users.
 | category | VARCHAR(100) | Book category |
 | condition | ENUM | NEW, LIKE_NEW, GOOD, FAIR |
 | location | VARCHAR(255) | Location of book |
-| postedDate | VARCHAR(50) | Human-readable date |
+| postedTimestamp | BIGINT | Unix timestamp (use instead of postedDate) |
 | postedTimestamp | BIGINT | Unix timestamp |
 | coverUrl | VARCHAR(500) | Book cover image URL |
 | listingType | ENUM | EXCHANGE or GIVEAWAY |
 | description | LONGTEXT | Book description |
 | ownerId | VARCHAR(255) | User ID of poster |
-| ownerUsername | VARCHAR(255) | Username of poster |
 | rating | DECIMAL(3, 2) | Book rating |
-| distance | VARCHAR(50) | Distance from user |
 | coverColor | VARCHAR(20) | Dominant cover color (hex) |
 | created_at | TIMESTAMP | Record creation |
 | updated_at | TIMESTAMP | Last update |
@@ -124,8 +122,7 @@ Stores all book listings posted by users.
   "coverUrl": "https://...",
   "listingType": "EXCHANGE",
   "description": "Lightly used, excellent condition. Looking for science fiction novels",
-  "ownerId": "user_456",
-  "ownerUsername": "johndoe"
+  "ownerId": "user_456"
 }
 ```
 
