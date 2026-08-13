@@ -11,7 +11,42 @@ require_once 'config/db.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
-if ($method !== 'GET' || $action !== 'list') {
+// Support GET list and POST add
+if ($method === 'GET' && $action === 'list') {
+    // continue to list handling below
+} elseif ($method === 'POST' && $action === 'add') {
+    // handle add favorite
+    $data = json_decode(file_get_contents('php://input'), true);
+    if (!$data || !isset($data['user_id']) || !isset($data['book_id'])) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'user_id and book_id are required']);
+        exit();
+    }
+
+    $user_id = trim($data['user_id']);
+    $book_id = trim($data['book_id']);
+    $fav_id = bin2hex(random_bytes(16));
+    $ts = (int)round(microtime(true) * 1000);
+
+    $ok = query_execute("INSERT INTO favorites (id, userId, bookId, timestamp) VALUES (?, ?, ?, ?)", [$fav_id, $user_id, $book_id, $ts], 'sssi');
+    if ($ok) {
+        http_response_code(201);
+        echo json_encode(['status' => 'success', 'message' => 'Favorite added']);
+        exit();
+    } else {
+        $err = get_db_error();
+        // Duplicate entry for unique_favorite (userId, bookId)
+        if (stripos($err, 'Duplicate') !== false || stripos($err, 'duplicate') !== false) {
+            http_response_code(200);
+            echo json_encode(['status' => 'success', 'message' => 'Already favorited']);
+            exit();
+        }
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Failed to add favorite']);
+        exit();
+    }
+
+} else {
     http_response_code(405);
     echo json_encode(['status' => 'error', 'message' => 'Method not allowed or invalid action']);
     exit();
