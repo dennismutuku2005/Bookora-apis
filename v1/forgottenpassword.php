@@ -6,6 +6,7 @@
 
 require_once 'config/corshandler.php';
 require_once 'config/db.php';
+require_once 'services/password.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -58,24 +59,22 @@ function handle_request_reset() {
         return;
     }
     
-    // Generate reset token (32 characters)
-    $reset_token = bin2hex(random_bytes(16));
-    $reset_token_hash = hash('sha256', $reset_token);
-    $reset_expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
-    
-    // Store reset token in database
-    // Note: Database needs reset_token_hash and reset_token_expires columns
-    $update_query = "UPDATE users SET reset_token_hash = ?, reset_token_expires = ? WHERE id = ?";
-    
-    if (!query_execute($update_query, [$reset_token_hash, $reset_expires, $user['id']], 'sss')) {
-        send_error('Failed to process password reset request', 500);
+    // Generate and store reset token via service
+    $reset_token = generate_reset_token_for_email($email);
+    if ($reset_token === null) {
+        // For security, still return success message
+        send_success('If an account exists with this email, you will receive a password reset link', null, 200);
         return;
     }
     
-    // Simulate sending reset email
+    // Simulate sending reset email and provide mock reset link for testing
     simulate_send_reset_email($user['email'], $user['firstName'], $reset_token);
-    
-    send_success('If an account exists with this email, you will receive a password reset link', null, 200);
+
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $reset_link = $protocol . '://' . $host . '/v1/reset-password.php?token=' . $reset_token;
+
+    send_success('If an account exists with this email, you will receive a password reset link', ['reset_link' => $reset_link], 200);
 }
 
 // ============================================================
@@ -105,29 +104,10 @@ function handle_reset_password() {
         return;
     }
     
-    // Hash the token to match stored hash
-    $reset_token_hash = hash('sha256', $reset_token);
-    
-    // Find user with valid reset token
-    $user = query_fetch_one(
-        "SELECT id, email FROM users WHERE reset_token_hash = ? AND reset_token_expires > NOW()",
-        [$reset_token_hash],
-        's'
-    );
-    
-    if (!$user) {
+    // Reset password via service
+    $ok = reset_password_with_token($reset_token, $new_password);
+    if (!$ok) {
         send_error('Invalid or expired reset token', 401);
-        return;
-    }
-    
-    // Hash new password
-    $password_hash = password_hash($new_password, PASSWORD_BCRYPT, ['cost' => 12]);
-    
-    // Update password and clear reset token
-    $update_query = "UPDATE users SET password_hash = ?, reset_token_hash = NULL, reset_token_expires = NULL WHERE id = ?";
-    
-    if (!query_execute($update_query, [$password_hash, $user['id']], 'ss')) {
-        send_error('Failed to reset password', 500);
         return;
     }
     
