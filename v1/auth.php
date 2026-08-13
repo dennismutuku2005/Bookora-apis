@@ -4,26 +4,12 @@
  * Handles user login and registration
  */
 
+require_once 'config/corshandler.php';
 require_once 'config/db.php';
-
-// ============================================================
-// CORS HEADERS
-// ============================================================
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-header('Access-Control-Max-Age: 86400');
-header('Content-Type: application/json');
 
 // Get request method and action
 $method = $_SERVER['REQUEST_METHOD'];
 $action = isset($_GET['action']) ? $_GET['action'] : '';
-
-// Handle CORS preflight
-if ($method === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
 
 // Route to appropriate handler
 if ($method === 'POST') {
