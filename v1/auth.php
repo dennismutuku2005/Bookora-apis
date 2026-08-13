@@ -6,6 +6,13 @@
 
 require_once 'config/db.php';
 
+// ============================================================
+// CORS HEADERS
+// ============================================================
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+header('Access-Control-Max-Age: 86400');
 header('Content-Type: application/json');
 
 // Get request method and action
@@ -92,7 +99,7 @@ function handle_register() {
     $data = json_decode(file_get_contents("php://input"), true);
     
     // Validate required fields
-    $required = ['id', 'firstName', 'lastName', 'username', 'email', 'phoneNumber', 'password'];
+    $required = ['firstName', 'lastName', 'username', 'email', 'phoneNumber', 'password'];
     foreach ($required as $field) {
         if (!isset($data[$field]) || empty($data[$field])) {
             send_error("Field '{$field}' is required", 400);
@@ -100,7 +107,9 @@ function handle_register() {
         }
     }
     
-    $id = trim($data['id']);
+    // Generate unique ID
+    $id = generate_user_id();
+    
     $firstName = trim($data['firstName']);
     $lastName = trim($data['lastName']);
     $username = trim($data['username']);
@@ -175,6 +184,13 @@ function handle_register() {
 // ============================================================
 // HELPER FUNCTIONS
 // ============================================================
+
+/**
+ * Generate unique user ID
+ */
+function generate_user_id() {
+    return 'user_' . bin2hex(random_bytes(12));
+}
 
 /**
  * Send success JSON response
