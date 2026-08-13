@@ -48,7 +48,16 @@ function handle_get() {
 }
 
 function handle_update() {
-    $data = json_decode(file_get_contents('php://input'), true);
+    $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+    $isMultipart = strpos($contentType, 'multipart/form-data') !== false;
+
+    if ($isMultipart) {
+        // Use $_POST and $_FILES for multipart updates
+        $data = $_POST;
+    } else {
+        $data = json_decode(file_get_contents('php://input'), true);
+    }
+
     if (!$data || !isset($data['user_id'])) send_error('user_id is required', 400);
     $id = trim($data['user_id']);
 
@@ -59,12 +68,9 @@ function handle_update() {
 
     foreach ($allowed as $f) {
         if (array_key_exists($f, $data)) {
-            // Prevent clearing of critical fields like username
             if ($f === 'username' && strlen(trim((string)$data[$f])) === 0) {
                 send_error('username cannot be empty', 400);
             }
-
-            // Allow partial updates: include field if present (even empty for optional fields)
             $fields[] = "$f = ?";
             $params[] = $data[$f];
             $types .= 's';
@@ -75,6 +81,35 @@ function handle_update() {
         $fields[] = "shareContactByEmail = ?";
         $params[] = ($data['shareContactByEmail']) ? 1 : 0;
         $types .= 'i';
+    }
+
+    // Handle avatar upload when multipart/form-data and file provided
+    if ($isMultipart && isset($_FILES['avatar']) && is_uploaded_file($_FILES['avatar']['tmp_name'])) {
+        $up = $_FILES['avatar'];
+        $origName = $up['name'];
+        $tmp = $up['tmp_name'];
+        $err = $up['error'];
+
+        if ($err !== UPLOAD_ERR_OK) {
+            send_error('File upload error', 400);
+        }
+
+        $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+        $allowedExt = ['jpg','jpeg','png'];
+        if (!in_array($ext, $allowedExt)) send_error('Invalid image type', 400);
+
+        $filename = bin2hex(random_bytes(16)) . '.' . $ext;
+        $uploadDir = dirname(__DIR__) . '/uploads';
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+        $dest = $uploadDir . '/' . $filename;
+
+        if (!move_uploaded_file($tmp, $dest)) send_error('Failed to save uploaded file', 500);
+
+        // Save web-accessible path
+        $avatarUrl = '/uploads/' . $filename;
+        $fields[] = "avatarUrl = ?";
+        $params[] = $avatarUrl;
+        $types .= 's';
     }
 
     if (count($fields) === 0) send_error('No updatable fields provided', 400);

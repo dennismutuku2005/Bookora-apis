@@ -23,3 +23,6 @@ Thumbs.db
 # Build outputs
 /dist/
 /build/
+
+# Uploads (user content)
+/uploads/
