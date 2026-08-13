@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE NOT NULL,
     phone VARCHAR(20),
     password_hash VARCHAR(255),
+    reset_token_hash VARCHAR(64) NULL,
+    reset_token_expires TIMESTAMP NULL,
     avatarUrl VARCHAR(500),
     bio TEXT,
     memberSince TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -26,6 +28,7 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_username (username),
     INDEX idx_email (email),
+    INDEX idx_reset_token_hash (reset_token_hash),
     INDEX idx_rating (rating)
 );
 
