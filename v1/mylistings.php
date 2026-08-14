@@ -38,8 +38,26 @@ $rows = query_select(
     [$user_id, $per_page, $offset], 'sii'
 );
 
+// Enrich with computed fields
+foreach ($rows as &$row) {
+    $row['isFavorite'] = false;
+    $row['postedDate'] = !empty($row['created_at']) ? $row['created_at'] : '';
+    $row['distance'] = '';
+    $row['ownerUsername'] = get_owner_username($row['ownerId']);
+}
+unset($row);
+
 http_response_code(200);
-echo json_encode(['status' => 'success', 'data' => ['total' => $total, 'page' => $page, 'per_page' => $per_page, 'total_pages' => $total_pages, 'items' => $rows]]);
+echo json_encode(['status' => 'success', 'data' => $rows]);
 exit();
+
+function get_owner_username($ownerId) {
+    if (empty($ownerId)) {
+        return '';
+    }
+    $row = query_fetch_one('SELECT username FROM users WHERE id = ?', [$ownerId], 's');
+    return $row['username'] ?? '';
+}
+
 
 ?>

@@ -74,8 +74,15 @@ if ($method === 'GET' && $action === 'list') {
     exit();
 }
 
-$user_id = isset($_GET['user_id']) ? trim($_GET['user_id']) : null;
-$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+function get_owner_username($ownerId) {
+    if (empty($ownerId)) {
+        return '';
+    }
+    $row = query_fetch_one('SELECT username FROM users WHERE id = ?', [$ownerId], 's');
+    return $row['username'] ?? '';
+}
+
+$user_id = isset($_GET['user_id']) ? trim($_GET['user_id']) : null;$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $per_page = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 20;
 $per_page = max(1, min($per_page, 100));
 
@@ -92,27 +99,29 @@ $total = isset($countRow['total']) ? (int)$countRow['total'] : 0;
 $total_pages = ($total === 0) ? 0 : (int)ceil($total / $per_page);
 $offset = ($page - 1) * $per_page;
 
-// fetch paginated favorites with basic book info
-$query = "SELECT f.id AS favoriteId, f.bookId, f.timestamp AS favorited_at, b.title, b.author, b.coverUrl, b.listingType, b.ownerId
+// fetch paginated favorites with full book info
+$query = "SELECT b.id, b.title, b.author, b.category, b.condition, b.location, b.postedTimestamp, b.coverUrl, b.listingType, b.description, b.ownerId, b.rating, b.coverColor, b.created_at, b.updated_at
           FROM favorites f
           LEFT JOIN books b ON f.bookId = b.id
           WHERE f.userId = ?
-          ORDER BY f.created_at DESC
+          ORDER BY f.timestamp DESC
           LIMIT ? OFFSET ?";
 
 $rows = query_select($query, [$user_id, $per_page, $offset], 'sii');
 
+// Enrich with computed fields
+foreach ($rows as &$row) {
+    $row['isFavorite'] = true;
+    $row['postedDate'] = !empty($row['created_at']) ? $row['created_at'] : '';
+    $row['distance'] = '';
+    $row['ownerUsername'] = get_owner_username($row['ownerId']);
+}
+unset($row);
+
 http_response_code(200);
 echo json_encode([
     'status' => 'success',
-    'data' => [
-        'total' => $total,
-        'page' => $page,
-        'per_page' => $per_page,
-        'total_pages' => $total_pages,
-        'items' => $rows
-    ]
+    'data' => $rows
 ]);
 exit();
-
 ?>
