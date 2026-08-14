@@ -16,7 +16,7 @@ $userId = trim($_GET['user_id'] ?? '');
 if ($action === 'stats' && $userId !== '') {
     $booksPosted = (int)query_fetch_one('SELECT COUNT(*) AS total FROM books WHERE ownerId = ?', [$userId], 's')['total'];
     $favoritesCount = (int)query_fetch_one('SELECT COUNT(*) AS total FROM favorites WHERE userId = ?', [$userId], 's')['total'];
-    $booksShared = (int)query_fetch_one('SELECT COUNT(*) AS total FROM claim_requests WHERE ownerId = ? AND status IN ("CONFIRMED_CLAIMER", "CONFIRMED_OWNER", "COMPLETED")', [$userId], 's')['total'];
+    $booksShared = (int)query_fetch_one('SELECT COUNT(*) AS total FROM claim_requests WHERE ownerId = ? AND `status` IN ("CONFIRMED_CLAIMER", "CONFIRMED_OWNER", "COMPLETED")', [$userId], 's')['total'];
     $unreadNotifications = (int)query_fetch_one('SELECT COUNT(*) AS total FROM notifications WHERE userId = ? AND is_read = 0', [$userId], 's')['total'];
 
     echo json_encode([

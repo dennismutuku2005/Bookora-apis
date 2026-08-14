@@ -34,7 +34,7 @@ $total_pages = ($total === 0) ? 0 : (int)ceil($total / $per_page);
 $offset = ($page - 1) * $per_page;
 
 $rows = query_select(
-    "SELECT id, title, author, category, condition, location, postedTimestamp, coverUrl, listingType, description, ownerId, rating, coverColor, created_at, updated_at FROM books WHERE ownerId = ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
+    "SELECT id, title, author, category, `condition`, location, postedTimestamp, coverUrl, `listingType`, description, ownerId, rating, coverColor, created_at, updated_at FROM books WHERE ownerId = ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
     [$user_id, $per_page, $offset], 'sii'
 );
 

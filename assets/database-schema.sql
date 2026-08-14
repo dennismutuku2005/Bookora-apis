@@ -50,11 +50,11 @@ CREATE TABLE IF NOT EXISTS books (
     title VARCHAR(255) NOT NULL,
     author VARCHAR(255) NOT NULL,
     category VARCHAR(100),
-    condition ENUM('NEW', 'LIKE_NEW', 'GOOD', 'FAIR') DEFAULT 'GOOD',
+    `condition` ENUM('NEW', 'LIKE_NEW', 'GOOD', 'FAIR') DEFAULT 'GOOD',
     location VARCHAR(255),
     postedTimestamp BIGINT NOT NULL,
     coverUrl VARCHAR(500),
-    listingType ENUM('EXCHANGE', 'GIVEAWAY') NOT NULL DEFAULT 'GIVEAWAY',
+    `listingType` ENUM('EXCHANGE', 'GIVEAWAY') NOT NULL DEFAULT 'GIVEAWAY',
     description LONGTEXT,
     ownerId VARCHAR(255) NOT NULL,
     rating DECIMAL(3, 2) DEFAULT 0.00,
@@ -66,8 +66,8 @@ CREATE TABLE IF NOT EXISTS books (
     INDEX idx_ownerId (ownerId),
     INDEX idx_title (title),
     INDEX idx_author (author),
-    INDEX idx_condition (condition),
-    INDEX idx_listingType (listingType),
+    INDEX idx_condition (`condition`),
+    INDEX idx_listingType (`listingType`),
     INDEX idx_postedTimestamp (postedTimestamp),
     FULLTEXT INDEX ft_search (title, author, description)
 );
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS claim_requests (
     claimerPhone VARCHAR(20),
     ownerId VARCHAR(255) NOT NULL,
     ownerName VARCHAR(255),
-    status ENUM('PENDING', 'ACCEPTED', 'CONFIRMED_CLAIMER', 'CONFIRMED_OWNER', 'COMPLETED', 'REJECTED') DEFAULT 'PENDING',
+    `status` ENUM('PENDING', 'ACCEPTED', 'CONFIRMED_CLAIMER', 'CONFIRMED_OWNER', 'COMPLETED', 'REJECTED') DEFAULT 'PENDING',
     timestamp BIGINT NOT NULL,
     confirmedByClaimer BOOLEAN DEFAULT FALSE,
     confirmedByOwner BOOLEAN DEFAULT FALSE,
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS claim_requests (
     INDEX idx_bookId (bookId),
     INDEX idx_claimerId (claimerId),
     INDEX idx_ownerId (ownerId),
-    INDEX idx_status (status),
+    INDEX idx_status (`status`),
     INDEX idx_timestamp (timestamp)
 );
 

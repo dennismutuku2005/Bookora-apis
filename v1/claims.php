@@ -41,7 +41,7 @@ function handle_get_claim() {
     }
 
     $row = query_fetch_one(
-        'SELECT id, bookId, bookTitle, claimerId, claimerName, claimerEmail, claimerPhone, ownerId, ownerName, status, timestamp, confirmedByClaimer, confirmedByOwner, created_at, updated_at 
+        'SELECT id, bookId, bookTitle, claimerId, claimerName, claimerEmail, claimerPhone, ownerId, ownerName, `status`, timestamp, confirmedByClaimer, confirmedByOwner, created_at, updated_at 
          FROM claim_requests WHERE id = ?',
         [$claimId],
         's'
@@ -67,21 +67,21 @@ function handle_get_my_claims() {
 
     if ($type === 'claimer') {
         $rows = query_select(
-            'SELECT id, bookId, bookTitle, claimerId, claimerName, claimerEmail, claimerPhone, ownerId, ownerName, status, timestamp, confirmedByClaimer, confirmedByOwner, created_at, updated_at 
+            'SELECT id, bookId, bookTitle, claimerId, claimerName, claimerEmail, claimerPhone, ownerId, ownerName, `status`, timestamp, confirmedByClaimer, confirmedByOwner, created_at, updated_at 
              FROM claim_requests WHERE claimerId = ? ORDER BY timestamp DESC',
             [$userId],
             's'
         );
     } elseif ($type === 'owner') {
         $rows = query_select(
-            'SELECT id, bookId, bookTitle, claimerId, claimerName, claimerEmail, claimerPhone, ownerId, ownerName, status, timestamp, confirmedByClaimer, confirmedByOwner, created_at, updated_at 
+            'SELECT id, bookId, bookTitle, claimerId, claimerName, claimerEmail, claimerPhone, ownerId, ownerName, `status`, timestamp, confirmedByClaimer, confirmedByOwner, created_at, updated_at 
              FROM claim_requests WHERE ownerId = ? ORDER BY timestamp DESC',
             [$userId],
             's'
         );
     } else {
         $rows = query_select(
-            'SELECT id, bookId, bookTitle, claimerId, claimerName, claimerEmail, claimerPhone, ownerId, ownerName, status, timestamp, confirmedByClaimer, confirmedByOwner, created_at, updated_at 
+            'SELECT id, bookId, bookTitle, claimerId, claimerName, claimerEmail, claimerPhone, ownerId, ownerName, `status`, timestamp, confirmedByClaimer, confirmedByOwner, created_at, updated_at 
              FROM claim_requests WHERE claimerId = ? OR ownerId = ? ORDER BY timestamp DESC',
             [$userId, $userId],
             'ss'
@@ -120,7 +120,7 @@ function handle_create_claim() {
     $timestamp = (int)round(microtime(true) * 1000);
 
     $ok = query_execute(
-        'INSERT INTO claim_requests (id, bookId, bookTitle, claimerId, claimerName, claimerEmail, claimerPhone, ownerId, ownerName, status, timestamp, confirmedByClaimer, confirmedByOwner) 
+        'INSERT INTO claim_requests (id, bookId, bookTitle, claimerId, claimerName, claimerEmail, claimerPhone, ownerId, ownerName, `status`, timestamp, confirmedByClaimer, confirmedByOwner) 
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)',
         [$claimId, $bookId, $bookTitle, $claimerId, $claimerName, $claimerEmail, $claimerPhone, $ownerId, $ownerName, 'PENDING', $timestamp],
         'ssssssssssi'
@@ -140,7 +140,7 @@ function handle_create_claim() {
     );
 
     $row = query_fetch_one(
-        'SELECT id, bookId, bookTitle, claimerId, claimerName, claimerEmail, claimerPhone, ownerId, ownerName, status, timestamp, confirmedByClaimer, confirmedByOwner 
+        'SELECT id, bookId, bookTitle, claimerId, claimerName, claimerEmail, claimerPhone, ownerId, ownerName, `status`, timestamp, confirmedByClaimer, confirmedByOwner 
          FROM claim_requests WHERE id = ?',
         [$claimId],
         's'
@@ -179,7 +179,7 @@ function handle_confirm_received() {
     // Update claim
     $newStatus = ($claim['confirmedByOwner'] == 1) ? 'COMPLETED' : 'CONFIRMED_CLAIMER';
     query_execute(
-        'UPDATE claim_requests SET confirmedByClaimer = 1, status = ? WHERE id = ?',
+        'UPDATE claim_requests SET confirmedByClaimer = 1, `status` = ? WHERE id = ?',
         [$newStatus, $claimId],
         'ss'
     );
@@ -228,7 +228,7 @@ function handle_confirm_shared() {
     // Update claim
     $newStatus = ($claim['confirmedByClaimer'] == 1) ? 'COMPLETED' : 'CONFIRMED_OWNER';
     query_execute(
-        'UPDATE claim_requests SET confirmedByOwner = 1, status = ? WHERE id = ?',
+        'UPDATE claim_requests SET confirmedByOwner = 1, `status` = ? WHERE id = ?',
         [$newStatus, $claimId],
         'ss'
     );
@@ -272,7 +272,7 @@ function handle_accept_claim() {
         send_error('Only the owner can accept a claim', 403);
     }
 
-    query_execute('UPDATE claim_requests SET status = ? WHERE id = ?', ['ACCEPTED', $claimId], 'ss');
+    query_execute('UPDATE claim_requests SET `status` = ? WHERE id = ?', ['ACCEPTED', $claimId], 'ss');
 
     // Notify claimer
     $notifId = 'notif_' . bin2hex(random_bytes(12));
@@ -313,7 +313,7 @@ function handle_reject_claim() {
         send_error('Only the owner can reject a claim', 403);
     }
 
-    query_execute('UPDATE claim_requests SET status = ? WHERE id = ?', ['REJECTED', $claimId], 'ss');
+    query_execute('UPDATE claim_requests SET `status` = ? WHERE id = ?', ['REJECTED', $claimId], 'ss');
 
     // Notify claimer
     $notifId = 'notif_' . bin2hex(random_bytes(12));

@@ -43,7 +43,7 @@ function handle_list() {
         $types .= 'sss';
     }
 
-    $sql = 'SELECT id, title, author, category, condition, location, postedTimestamp, coverUrl, listingType, description, ownerId, rating, coverColor, created_at, updated_at FROM books';
+    $sql = 'SELECT id, title, author, category, `condition`, location, postedTimestamp, coverUrl, `listingType`, description, ownerId, rating, coverColor, created_at, updated_at FROM books';
     if (!empty($where)) {
         $sql .= ' WHERE ' . implode(' AND ', $where);
     }
@@ -72,7 +72,7 @@ function handle_get() {
     }
 
     $row = query_fetch_one(
-        'SELECT id, title, author, category, condition, location, postedTimestamp, coverUrl, listingType, description, ownerId, rating, coverColor, created_at, updated_at FROM books WHERE id = ?',
+        'SELECT id, title, author, category, `condition`, location, postedTimestamp, coverUrl, `listingType`, description, ownerId, rating, coverColor, created_at, updated_at FROM books WHERE id = ?',
         [$bookId],
         's'
     );
@@ -114,7 +114,7 @@ function handle_create() {
     $postedTimestamp = isset($data['postedTimestamp']) ? (int)$data['postedTimestamp'] : (int)round(microtime(true) * 1000);
 
     $ok = query_execute(
-        'INSERT INTO books (id, title, author, category, condition, location, postedTimestamp, coverUrl, listingType, description, ownerId, rating, coverColor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO books (id, title, author, category, `condition`, location, postedTimestamp, coverUrl, `listingType`, description, ownerId, rating, coverColor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [$bookId, $title, $author, $category, $condition, $location, $postedTimestamp, $coverUrl, $listingType, $description, $userId, (float)($data['rating'] ?? 0.0), $coverColor],
         'ssssssisssssd'
     );
@@ -161,7 +161,9 @@ function handle_update() {
 
     foreach ($allowed as $field => $type) {
         if (array_key_exists($field, $data)) {
-            $fields[] = $field . ' = ?';
+            // Use backticks for reserved keywords
+            $fieldName = in_array($field, ['condition', 'listingType', 'status']) ? '`' . $field . '`' : $field;
+            $fields[] = $fieldName . ' = ?';
             $params[] = trim((string)$data[$field]);
             $types .= $type;
         }
@@ -186,7 +188,7 @@ function handle_update() {
         send_error('Failed to update book', 500);
     }
 
-    $row = query_fetch_one('SELECT id, title, author, category, condition, location, postedTimestamp, coverUrl, listingType, description, ownerId, rating, coverColor, created_at FROM books WHERE id = ?', [$bookId], 's');
+    $row = query_fetch_one('SELECT id, title, author, category, `condition`, location, postedTimestamp, coverUrl, `listingType`, description, ownerId, rating, coverColor, created_at FROM books WHERE id = ?', [$bookId], 's');
     if ($row) {
         $row['isFavorite'] = false;
         $row['postedDate'] = !empty($row['created_at']) ? $row['created_at'] : '';
