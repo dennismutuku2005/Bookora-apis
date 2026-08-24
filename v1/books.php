@@ -30,6 +30,9 @@ function handle_list() {
     $types = '';
     $where = [];
 
+    // Always exclude books where the claim request has been completed (exchanged/picked up)
+    $where[] = "id NOT IN (SELECT bookId FROM claim_requests WHERE status = 'COMPLETED')";
+
     if ($userId !== '') {
         $where[] = 'ownerId = ?';
         $params[] = $userId;
