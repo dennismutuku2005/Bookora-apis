@@ -17,6 +17,8 @@ if ($method === 'POST') {
         handle_login();
     } elseif ($action === 'register') {
         handle_register();
+    } elseif ($action === 'google_login') {
+        handle_google_login();
     } else {
         send_error('Invalid action', 400);
     }
@@ -158,6 +160,94 @@ function handle_register() {
     }
     
     // Fetch and return created user (without password)
+    $new_user = query_fetch_one(
+        "SELECT id, firstName, lastName, username, email, phone, rating, booksPosted, booksShared, favoritesCount, memberSince FROM users WHERE id = ?",
+        [$id],
+        's'
+    );
+    
+    send_success('Registration successful', $new_user, 201);
+}
+
+// ============================================================
+// GOOGLE SIGN-IN HANDLER
+// ============================================================
+
+function handle_google_login() {
+    $data = json_decode(file_get_contents("php://input"), true);
+    
+    if (!isset($data['email'])) {
+        send_error('Email is required', 400);
+        return;
+    }
+    
+    $email = trim($data['email']);
+    
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        send_error('Invalid email format', 400);
+        return;
+    }
+    
+    // Check if user already exists
+    $user = query_fetch_one(
+        "SELECT id, firstName, lastName, username, email, phone, rating, booksPosted, booksShared, favoritesCount, memberSince FROM users WHERE email = ?",
+        [$email],
+        's'
+    );
+    
+    if ($user) {
+        send_success('Login successful', $user, 200);
+        return;
+    }
+    
+    // User does not exist, so register them automatically
+    $id = generate_user_id();
+    
+    $firstName = trim($data['firstName'] ?? '');
+    $lastName = trim($data['lastName'] ?? '');
+    
+    // Generate username from email prefix
+    $username = strstr($email, '@', true); // get prefix of email
+    if (!$username) {
+        $username = 'user';
+    }
+    $username = preg_replace('/[^a-zA-Z0-9_]/', '', $username); // strip invalid characters
+    
+    // Ensure it meets length requirements (3-20)
+    if (strlen($username) < 3) {
+        $username = $username . '123';
+    }
+    if (strlen($username) > 20) {
+        $username = substr($username, 0, 20);
+    }
+    
+    // Check if username already exists, if so append suffixes until unique
+    $base_username = $username;
+    $counter = 1;
+    while (true) {
+        $existing_username = query_fetch_one("SELECT id FROM users WHERE username = ?", [$username], 's');
+        if (!$existing_username) {
+            break;
+        }
+        $suffix = (string)$counter;
+        $username = substr($base_username, 0, 20 - strlen($suffix)) . $suffix;
+        $counter++;
+    }
+    
+    // Generate a secure dummy/random password hash
+    $dummy_password = bin2hex(random_bytes(16));
+    $password_hash = password_hash($dummy_password, PASSWORD_BCRYPT, ['cost' => 12]);
+    
+    // Insert new user
+    $query = "INSERT INTO users (id, firstName, lastName, username, email, phone, password_hash, memberSince, is_active) 
+              VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), TRUE)";
+    
+    if (!query_execute($query, [$id, $firstName, $lastName, $username, $email, '', $password_hash], 'sssssss')) {
+        send_error('Registration failed: ' . get_db_error(), 500);
+        return;
+    }
+    
+    // Fetch and return created user
     $new_user = query_fetch_one(
         "SELECT id, firstName, lastName, username, email, phone, rating, booksPosted, booksShared, favoritesCount, memberSince FROM users WHERE id = ?",
         [$id],
