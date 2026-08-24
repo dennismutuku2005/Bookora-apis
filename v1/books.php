@@ -116,7 +116,7 @@ function handle_create() {
     $ok = query_execute(
         'INSERT INTO books (id, title, author, category, `condition`, location, postedTimestamp, coverUrl, `listingType`, description, ownerId, rating, coverColor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [$bookId, $title, $author, $category, $condition, $location, $postedTimestamp, $coverUrl, $listingType, $description, $userId, (float)($data['rating'] ?? 0.0), $coverColor],
-        'ssssssisssssd'
+        'ssssssissssds'
     );
 
     if (!$ok) {
