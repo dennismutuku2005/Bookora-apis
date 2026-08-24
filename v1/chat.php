@@ -60,7 +60,7 @@ function handle_get_messages() {
     }
 
     $rows = query_select(
-        'SELECT id, conversationId, senderId, senderName, text, timestamp, is_read AS read, created_at 
+        'SELECT id, conversationId, senderId, senderName, text, timestamp, is_read AS `read`, created_at 
          FROM messages 
          WHERE conversationId = ? 
          ORDER BY timestamp ASC',
@@ -127,7 +127,7 @@ function handle_create_conversation() {
         'INSERT INTO chat_conversations (id, participant1Id, participant2Id, participant1Name, participant2Name, bookId, bookTitle, unreadCount) 
          VALUES (?, ?, ?, ?, ?, ?, ?, 0)',
         [$convId, $userId, $otherUserId, $userName, $otherUserName, $bookId, $bookTitle],
-        'ssssssss'
+        'sssssss'
     );
 
     if (!$ok) {
@@ -187,7 +187,7 @@ function handle_send_message() {
     );
 
     $msg = query_fetch_one(
-        'SELECT id, conversationId, senderId, senderName, text, timestamp, is_read AS read 
+        'SELECT id, conversationId, senderId, senderName, text, timestamp, is_read AS `read` 
          FROM messages WHERE id = ?',
         [$msgId],
         's'
