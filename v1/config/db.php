@@ -10,9 +10,9 @@
 
 // Define database credentials
 define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-define('DB_USER', getenv('DB_USER') ?: 'bookora_user');
-define('DB_PASS', getenv('DB_PASS') ?: 'your_password_here');
-define('DB_NAME', getenv('DB_NAME') ?: 'bookora_db');
+define('DB_USER', getenv('DB_USER') ?: 'root');
+define('DB_PASS', getenv('DB_PASS') ?: '');
+define('DB_NAME', getenv('DB_NAME') ?: 'bookora');
 define('DB_PORT', getenv('DB_PORT') ?: 3306);
 
 // ============================================================
