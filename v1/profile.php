@@ -35,11 +35,21 @@ function handle_get() {
     if (!$user_id) { send_error('user_id is required', 400); }
 
     $user = query_fetch_one(
-        "SELECT id, firstName, lastName, username, phone, avatarUrl, bio, booksPosted, booksShared, favoritesCount, shareContactByEmail FROM users WHERE id = ?",
+        "SELECT id, firstName, lastName, username, email, phone, avatarUrl, bio, shareContactByEmail FROM users WHERE id = ?",
         [$user_id], 's'
     );
 
     if (!$user) { send_error('User not found', 404); }
+
+    // Dynamically calculate live counts
+    $postedRow = query_fetch_one("SELECT COUNT(*) as total FROM books WHERE ownerId = ?", [$user_id], 's');
+    $user['booksPosted'] = (int)($postedRow['total'] ?? 0);
+
+    $favRow = query_fetch_one("SELECT COUNT(*) as total FROM favorites WHERE user_id = ? OR userId = ?", [$user_id, $user_id], 'ss');
+    $user['favoritesCount'] = (int)($favRow['total'] ?? 0);
+
+    $sharedRow = query_fetch_one("SELECT COUNT(*) as total FROM claims WHERE (claimerId = ? OR ownerId = ?) AND status = 'COMPLETED'", [$user_id, $user_id], 'ss');
+    $user['booksShared'] = (int)($sharedRow['total'] ?? 0);
 
     // Normalize booleans
     $user['shareContactByEmail'] = (bool)$user['shareContactByEmail'];
